@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HS TikTok Downloader</title>
+  <style>
+    /* Reset and Base Styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      /* Default: Dark Mode Styles (Standard) */
+      background: linear-gradient(135deg, #1A1A2E, #0F0F1A);
+      color: #E0E0E0;
+      overflow-x: hidden;
+      transition: background 0.5s, color 0.5s; 
+    }
+
+    /* Primary Accent Color (Clean Blue) */
+    :root {
+      --primary-blue: #0099ff; 
+      --dark-bg: #0F0F1A;
+      --medium-bg: #1A1A2E;
+      --text-color: #E0E0E0;
+      --input-bg: #111;
+      --container-bg: rgba(26, 26, 46, 0.95);
+    }
+
+    /* ========================================= */
+    /* Light Mode Styles for System Preference */
+    /* ========================================= */
+    /* Apply light mode if the system prefers it AND there is no manual override class */
+    @media (prefers-color-scheme: light) {
+        body:not(.dark-mode-manual):not(.light-mode-manual) {
+            background: linear-gradient(135deg, #f0f0f0, #ffffff);
+            color: #1A1A2E;
+        }
+        body:not(.dark-mode-manual):not(.light-mode-manual) .navbar {
+            background: #ffffff;
+            color: var(--primary-blue);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        body:not(.dark-mode-manual):not(.light-mode-manual) .container {
+            background: #ffffff;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        body:not(.dark-mode-manual):not(.light-mode-manual) input[type="url"] {
+            background: #f8f8f8;
+            border: 2px solid #ccc;
+            color: #1A1A2E;
+        }
+        body:not(.dark-mode-manual):not(.light-mode-manual) .author-box {
+            background: #f0f0f0;
+            border: 1px dashed var(--primary-blue);
+            color: #1A1A2E;
+        }
+        body:not(.dark-mode-manual):not(.light-mode-manual) .details-btn, 
+        body:not(.dark-mode-manual):not(.light-mode-manual) .downloads-btn {
+            background: #e0e0e0;
+            color: #1A1A2E;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        body:not(.dark-mode-manual):not(.light-mode-manual) .all-details, 
+        body:not(.dark-mode-manual):not(.light-mode-manual) .all-downloads {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+        }
+        body:not(.dark-mode-manual):not(.light-mode-manual) .stat {
+            background: #e0e0e0;
+            color: #1A1A2E;
+        }
+        body:not(.dark-mode-manual):not(.light-mode-manual) .telegram-box {
+            background: #f0f0f0;
+            border: 1px solid var(--primary-blue);
+        }
+        body:not(.dark-mode-manual):not(.light-mode-manual) footer {
+            background: #ffffff;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            color: #666;
+        }
+    }
+    
+    /* ========================================= */
+    /* Manual Override Classes (Used by JS) */
+    /* ========================================= */
+
+    /* Manual Light Mode (Overrides System/Default Dark) */
+    body.light-mode-manual {
+        background: linear-gradient(135deg, #f0f0f0, #ffffff) !important;
+        color: #1A1A2E !important;
+    }
+    .light-mode-manual .navbar {
+        background: #ffffff !important;
+        color: var(--primary-blue) !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+    }
+    .light-mode-manual .container {
+        background: #ffffff !important;
+        border: 1px solid #ccc !important;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) !important;
+    }
+    .light-mode-manual input[type="url"] {
+        background: #f8f8f8 !important;
+        border: 2px solid #ccc !important;
+        color: #1A1A2E !important;
+    }
+    .light-mode-manual .author-box {
+        background: #f0f0f0 !important;
+        border: 1px dashed var(--primary-blue) !important;
+        color: #1A1A2E !important;
+    }
+    .light-mode-manual .details-btn, .light-mode-manual .downloads-btn {
+        background: #e0e0e0 !important;
+        color: #1A1A2E !important;
+    }
+    .light-mode-manual .all-details, .light-mode-manual .all-downloads {
+        background: #f0f0f0 !important;
+        border: 1px solid #ccc !important;
+    }
+    .light-mode-manual .stat {
+        background: #e0e0e0 !important;
+        color: #1A1A2E !important;
+    }
+    .light-mode-manual .telegram-box {
+        background: #f0f0f0 !important;
+        border: 1px solid var(--primary-blue) !important;
+    }
+    .light-mode-manual footer {
+        background: #ffffff !important;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+        color: #666 !important;
+    }
+
+    /* Manual Dark Mode (Used to override System Light Mode) */
+    body.dark-mode-manual {
+        background: linear-gradient(135deg, #1A1A2E, #0F0F1A) !important;
+        color: #E0E0E0 !important;
+    }
+    .dark-mode-manual .navbar {
+        background: var(--dark-bg) !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+    }
+    /* ========================================= */
+
+    /* Navbar/Header */
+    .navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: var(--dark-bg);
+      padding: 15px 20px; 
+      z-index: 1000;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      
+      display: flex;
+      justify-content: space-between; 
+      align-items: center;
+      transition: background 0.5s, box-shadow 0.5s;
+    }
+    
+    .navbar-title {
+        font-size: 20px; 
+        font-weight: 600;
+        color: var(--primary-blue);
+        text-decoration: none; 
+        cursor: pointer;
+        flex-grow: 1;
+        text-align: left; 
+        margin-right: 15px; 
+    }
+
+    /* Theme Toggle Icon (Moon/Sun Visuals) */
+    .theme-toggle-btn {
+        background: white; 
+        border: none;
+        border-radius: 50%; 
+        width: 38px; 
+        height: 38px; 
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        padding: 0; 
+        transition: background 0.3s, box-shadow 0.3s;
+        position: relative;
+    }
+
+    .theme-toggle-btn::before {
+        content: '';
+        display: block;
+        width: 20px; 
+        height: 20px;
+        border-radius: 50%;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transition: all 0.3s;
+    }
+
+    /* Icon in Dark Mode (Moon) - Default or Manual Dark */
+    body:not(.light-mode-manual) .theme-toggle-btn::before {
+        background: #333; 
+        transform: translate(-50%, -50%) translateX(3px); 
+        box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3) inset;
+    }
+    
+    /* Icon in Light Mode (Sun) - System Light or Manual Light */
+    body.light-mode-manual .theme-toggle-btn::before,
+    @media (prefers-color-scheme: light) {
+        body:not(.dark-mode-manual):not(.light-mode-manual) .theme-toggle-btn::before {
+            background: var(--primary-blue); 
+            transform: translate(-50%, -50%); 
+            box-shadow: none; 
+        }
+    }
+    /* Button background for Light Mode */
+    body.light-mode-manual .theme-toggle-btn,
+    @media (prefers-color-scheme: light) {
+        body:not(.dark-mode-manual):not(.light-mode-manual) .theme-toggle-btn {
+            background: #f0f0f0; 
+        }
+    }
+
+    /* Main Centering Box */
+    .center-box {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 80px 20px 60px; 
+    }
+
+    /* Main Container (Downloader Box) */
+    .container {
+      width: 100%;
+      max-width: 500px;
+      background: var(--container-bg); 
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+      border: 1px solid #333; 
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .container:hover {
+      transform: translateY(-3px); 
+    }
+
+    /* Logo/Profile Image */
+    .profile-img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 4px solid var(--primary-blue); 
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); 
+      margin-bottom: 25px;
+      animation: none; 
+      transition: border-color 0.5s;
+    }
+
+    /* Input Field */
+    input[type="url"] {
+      width: 100%;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      border: 2px solid #333;
+      font-size: 16px;
+      background: var(--input-bg);
+      color: var(--text-color);
+      outline: none;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s;
+    }
+
+    input[type="url"]:focus {
+      border-color: var(--primary-blue); 
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5), 0 0 5px rgba(0, 153, 255, 0.5); 
+    }
+
+    /* Button */
+    button {
+      width: 100%;
+      padding: 15px;
+      border-radius: 10px;
+      border: none;
+      font-size: 18px;
+      font-weight: bold;
+      background: var(--primary-blue); 
+      color: white; 
+      cursor: pointer;
+      transition: all .3s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      background: #007acc; 
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
+      transform: translateY(-2px);
+    }
+
+    /* Result Box & Details */
+    .author-box {
+      margin-top: 25px;
+      padding: 15px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px dashed var(--primary-blue);
+      text-align: center;
+      color: #ccc;
+      transition: all 0.5s;
+    }
+    
+    .author-box img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 2px solid var(--primary-blue);
+        box-shadow: none; 
+        margin-bottom: 5px;
+        transition: border-color 0.5s;
+    }
+    
+    .author-box h3 {
+        color: var(--primary-blue);
+        transition: color 0.5s;
+    }
+
+    .details-btn, .downloads-btn {
+      background: #333; 
+      color: #fff;
+      font-weight: bold;
+      margin: 20px auto 0;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: fit-content;
+      transition: all 0.3s;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); 
+      display: block; 
+    }
+
+    .details-btn:hover, .downloads-btn:hover {
+      background: #444;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    }
+
+    .all-details, .all-downloads {
+      margin-top: 20px;
+      display: none;
+      padding: 15px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #444;
+      transition: background 0.5s, border 0.5s;
+    }
+
+    .grid-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      background: #111;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: none;
+      color: #ccc;
+      transition: all 0.5s;
+    }
+    
+    .stat b {
+        color: var(--primary-blue);
+        transition: color 0.5s;
+    }
+
+    .grid-downloads {
+      display: grid;
+      grid-template-columns: 1fr 1fr; 
+      gap: 10px; 
+      margin-top: 20px; 
+      align-items: stretch;
+    }
+
+    .tile {
+      background: var(--primary-blue); 
+      color: white; 
+      padding: 10px 8px; 
+      border-radius: 8px; 
+      text-decoration: none;
+      font-weight: bold;
+      transition: all .3s;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center; 
+      align-items: center; 
+      min-height: 70px; 
+      text-align: center;
+      font-size: 14px; 
+    }
+
+    .tile:hover {
+      background: #007acc; 
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    }
+    
+    .hide { display: none !important; }
+    .show { display: block !important; }
+    .show-grid { display: grid !important; }
+
+    /* Telegram Integration Box */
+    .telegram-box {
+      margin-top: 30px;
+      padding: 15px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--primary-blue);
+      box-shadow: none; 
+      transition: all 0.5s;
+    }
+
+    .telegram-box a {
+      color: var(--primary-blue);
+      text-decoration: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.5s;
+    }
+
+    .telegram-box img {
+      width: 25px;
+      height: 25px;
+      margin-right: 10px;
+    }
+
+    /* Footer */
+    footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      background: var(--dark-bg);
+      color: #666;
+      font-size: 14px;
+      padding: 10px 0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      transition: background 0.5s, box-shadow 0.5s;
+    }
+
+    footer a {
+      color: var(--primary-blue);
+      text-decoration: none;
+      transition: color 0.5s;
+    }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+    <a href="." class="navbar-title">HS TikTok Downloader</a>
+    
+    <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Day/Night Mode"></button>
+</div>
+
+<div class="center-box">
+  <div class="container">
+    <img src="https://i.supaimg.com/f07aa201-1c49-49ba-9b46-d46d9d28c17f.jpg" class="profile-img" alt="Logo" />
+    <input type="url" id="videoUrl" placeholder="Paste TikTok video URL here..." required />
+    <button onclick="downloadVideo()">SEARCH VIDEO</button>
+    <div id="result"></div>
+    
+    <div class="telegram-box">
+        <a href="https://t.me/haseeb117" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Telegram" />
+            Join our Telegram Channel!
+        </a>
+    </div>
+  </div>
+</div>
+
+<footer>© 2025 | Made with ❤️ by <a href="https://t.me/haseeb117" target="_blank">Haseeb</a></footer>
+
+<script type="module">
+  // =======================================================
+  // THEME TOGGLE LOGIC 
+  // =======================================================
+  const toggleBtn = document.getElementById('theme-toggle');
+  const body = document.body;
+  const DARK_CLASS = 'dark-mode-manual';
+  const LIGHT_CLASS = 'light-mode-manual';
+
+  function applyTheme(theme) {
+    body.classList.remove(DARK_CLASS, LIGHT_CLASS);
+    if (theme === 'light') {
+      body.classList.add(LIGHT_CLASS);
+    } else if (theme === 'dark') {
+      body.classList.add(DARK_CLASS);
+    }
+  }
+
+  function setInitialTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      applyTheme(savedTheme);
+    }
+  }
+
+  function toggleTheme() {
+    let isCurrentlyLight;
+
+    if (body.classList.contains(LIGHT_CLASS)) {
+        isCurrentlyLight = true;
+    } else if (body.classList.contains(DARK_CLASS)) {
+        isCurrentlyLight = false;
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        isCurrentlyLight = true;
+    } else {
+        isCurrentlyLight = false;
+    }
+
+    if (isCurrentlyLight) {
+      applyTheme('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      applyTheme('light');
+      localStorage.setItem('theme', 'light');
+    }
+  }
+
+  setInitialTheme();
+  toggleBtn.addEventListener('click', toggleTheme);
+
+
+  // =======================================================
+  // Force Download Logic 
+  // =======================================================
+  async function forceDownload(url, filename) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          alert(`Download failed for ${filename}: Status ${response.status}. Trying to open link.`);
+          window.open(url, '_blank');
+          return;
+        }
+
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        
+        const tempLink = document.createElement('a');
+        tempLink.style.display = 'none';
+        tempLink.href = blobUrl;
+        tempLink.setAttribute('download', filename);
+
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        
+        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(tempLink);
+        
+    } catch (error) {
+        alert("An error occurred during direct download (CORS issue?). Trying standard download.");
+        window.open(url, '_blank');
+    }
+  }
+  window.forceDownload = forceDownload;
+
+
+  // =======================================================
+  // Toggle Details/Downloads 
+  // =======================================================
+  function toggleDetails() {
+      const detailsDiv = document.getElementById('details');
+      const detailsBtn = document.getElementById('details-btn');
+      
+      detailsDiv.classList.toggle('show');
+      detailsBtn.classList.toggle('hide');
+  }
+
+  function toggleDownloads() {
+      const downloadsDiv = document.getElementById('downloads');
+      const downloadsBtn = document.getElementById('downloads-btn');
+      
+      downloadsDiv.classList.toggle('show-grid');
+      downloadsBtn.classList.toggle('hide');
+  }
+  window.toggleDetails = toggleDetails;
+  window.toggleDownloads = toggleDownloads;
+
+
+  // =======================================================
+  // Main Download Function (Using tikwm.com API)
+  // =======================================================
+  window.downloadVideo = async function () {
+    const urlInput = document.getElementById("videoUrl");
+    const url = urlInput.value;
+    const resultDiv = document.getElementById("result");
+    resultDiv.innerHTML = "⏳ Fetching video...";
+
+    if (!url.includes("tiktok.com")) {
+        resultDiv.innerHTML = "❌ Please enter a valid TikTok video URL.";
+        return;
+    }
+
+    try {
+      // Fetching data from the public tikwm.com API
+      const res = await fetch(`https://tikwm.com/api/?url=${encodeURIComponent(url)}`);
+      const json = await res.json();
+      
+      // *** INPUT CLEARING CODE ADDED HERE ***
+      urlInput.value = ""; 
+      // *************************************
+
+      if (json.code !== 0 || !json.data || !json.data.play) {
+        resultDiv.innerHTML = "❌ Could not fetch video. Check the URL or the API may be down.";
+        return;
+      }
+      
+      const data = json.data;
+      
+      const videoTitle = data.desc ? data.desc.substring(0, 30).replace(/[^\w\s]/gi, '_').trim() : 'tiktok_video';
+      const authorId = data.author.unique_id;
+
+      const formatCount = (count) => {
+          if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
+          if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
+          return count;
+      };
+
+      // HTML output with DIRECT DOWNLOAD CALLS
+      resultDiv.innerHTML = `
+        <div class="author-box">
+          <img src="${data.author.avatar}" alt="Author">
+          <h3>${data.author.nickname}</h3>
+          <small>@${data.author.unique_id}</small>
+          <p style="font-size: 14px; margin-top: 5px;">${data.desc || 'No description available.'}</p>
+        </div>
+        
+        <div class="details-btn" id="details-btn" onclick="toggleDetails()">🔎 Show Video Details 🔽</div>
+
+        <div id="details" class="all-details">
+          <div class="grid-stats">
+            <div class="stat">👁 Views<br><b>${formatCount(data.play_count)}</b></div>
+            <div class="stat">❤️ Likes<br><b>${formatCount(data.digg_count)}</b></div>
+            <div class="stat">💬 Comments<br><b>${formatCount(data.comment_count)}</b></div>
+            <div class="stat">🔁 Shares<br><b>${formatCount(data.share_count)}</b></div>
+            <div class="stat">⬇ Downloads<br><b>${formatCount(data.download_count)}</b></div>
+            <div class="stat">🔖 Bookmarks<br><b>${formatCount(data.collect_count)}</b></div>
+            <div class="stat">📍 Region<br><b>${data.region}</b></div>
+            <div class="stat">🕒 Duration<br><b>${data.duration}s</b></div>
+          </div>
+        </div>
+
+        <div class="downloads-btn" id="downloads-btn" onclick="toggleDownloads()">⬇️ Show Download Links 💾</div>
+
+        <div id="downloads" class="all-downloads show-grid">
+          <div class="grid-downloads">
+            <a href="#" onclick="event.preventDefault(); forceDownload('${data.wmplay}', '${videoTitle}_wm_by_${authorId}.mp4')" class="tile">🎬<br>Video (Watermark)</a>
+            <a href="#" onclick="event.preventDefault(); forceDownload('${data.play}', '${videoTitle}_nowm_by_${authorId}.mp4')" class="tile">💧<br>Video (No Watermark)</a>
+            <a href="#" onclick="event.preventDefault(); forceDownload('${data.origin_cover}', '${videoTitle}_cover_by_${authorId}.jpg')" class="tile">🖼️<br>Thumbnail/Cover</a>
+            <a href="#" onclick="event.preventDefault(); forceDownload('${data.music}', '${videoTitle}_audio_by_${authorId}.mp3')" class="tile">🎧<br>Audio (MP3)</a>
+          </div>
+        </div>
+      `;
+      document.getElementById('downloads-btn').classList.add('hide');
+
+    } catch (err) {
+      console.error(err);
+      resultDiv.innerHTML = "❌ An unexpected error occurred. Please try again.";
+    }
+  }
+</script>
+
+</body>
+</html>
